@@ -5,11 +5,16 @@ import { getServerEnv } from "@/server/config/env";
 const sections = [
   {
     title: "环境变量",
-    items: ["DATABASE_URL", "OPENAI_API_KEY", "ANTHROPIC_API_KEY", "STORAGE_DRIVER", "UPLOADS_DIR"],
+    items: [
+      "AUTH_SECRET / NEXTAUTH_URL",
+      "DEEPSEEK_API_KEY / QWEN_API_KEY",
+      "EMBEDDING_MODEL / RERANK_MODEL",
+      "STORAGE_DRIVER / UPLOADS_DIR / DATABASE_URL",
+    ],
   },
   {
     title: "系统边界",
-    items: ["单体 Next.js 16", "PostgreSQL + pgvector", "本地文件存储 / S3 抽象", "最小角色模型"],
+    items: ["单体 Next.js 16", "NextAuth + Zod", "PostgreSQL + pgvector", "本地文件存储 / S3 抽象"],
   },
   {
     title: "延后到下一阶段",
@@ -26,7 +31,7 @@ export default function SettingsPage() {
       <PageHeader
         eyebrow="Settings"
         title="系统设置与配置"
-        description="将模型、数据库、文件存储和部署约束统一收敛到一个页面，方便后续替换为真实管理后台。"
+        description="将认证、模型、Embedding、Rerank、文件存储和部署约束统一收敛到一个页面。"
       />
 
       <section className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
@@ -55,6 +60,14 @@ export default function SettingsPage() {
                 <p className="text-zinc-500">Storage Driver</p>
                 <p className="mt-2">{env.storageDriver}</p>
               </div>
+              <div className="rounded-2xl border border-white/10 bg-black/20 p-4 text-sm text-zinc-300">
+                <p className="text-zinc-500">Embedding / Rerank</p>
+                <p className="mt-2">{env.embeddingModel} / {env.rerankModel}</p>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-black/20 p-4 text-sm text-zinc-300">
+                <p className="text-zinc-500">Session Strategy</p>
+                <p className="mt-2">NextAuth Credentials + JWT</p>
+              </div>
               <div className="rounded-2xl border border-white/10 bg-black/20 p-4 text-sm text-zinc-300 sm:col-span-2">
                 <p className="text-zinc-500">DATABASE_URL</p>
                 <p className="mt-2 break-all">{env.databaseUrl}</p>
@@ -69,7 +82,9 @@ export default function SettingsPage() {
                 <div key={provider.id} className="rounded-2xl border border-white/10 bg-black/20 p-4">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <p className="font-medium text-white">{provider.provider}</p>
-                    <p className="text-xs uppercase tracking-[0.18em] text-zinc-500">{provider.readiness}</p>
+                    <p className="text-xs uppercase tracking-[0.18em] text-zinc-500">
+                      {provider.configured ? "configured" : "fallback"}
+                    </p>
                   </div>
                   <p className="mt-2 text-sm leading-6 text-zinc-400">{provider.focus}</p>
                 </div>

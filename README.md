@@ -13,8 +13,10 @@
 
 - `src/app` App Router 页面结构
 - 统一工作台导航与暗色视觉框架
-- 聊天中心页面与 `/api/chat` 流式 Route Handler 示例
-- 知识库、Agent、Workflow、Dashboard、登录与设置页面骨架
+- NextAuth Credentials 登录、受保护工作台与 API 鉴权
+- 聊天中心页面与 `/api/chat` 流式 Route Handler（DeepSeek / Qwen 路由、历史消息持久化、引用式回答）
+- 知识库上传链路：PDF / Markdown / DOCX / TXT、切片、Embedding、Hybrid Search、RRF、SSE 进度推送
+- Dashboard 上传链路：CSV / Excel 解析、字段概览、预览与 Markdown 报告
 - `src/server` 下的 config / auth / ai / rag / tools / services 基础模块
 - Drizzle schema、`drizzle.config.ts` 与初始 SQL migration 脚手架
 - `.env.example` 运行时配置模板
@@ -27,6 +29,8 @@
 - Tailwind CSS 4
 - Drizzle ORM
 - PostgreSQL + pgvector（schema / migration 已预留）
+- NextAuth
+- Zod
 
 ## 快速开始
 
@@ -36,6 +40,11 @@ pnpm install
 cp .env.example .env.local
 pnpm dev
 ```
+
+默认开发账号：
+
+- `admin@example.com / ChangeMe123!`
+- `member@example.com / ChangeMe123!`
 
 访问：
 
@@ -54,6 +63,7 @@ pnpm dev
 ```bash
 pnpm lint
 pnpm build
+pnpm db:check
 pnpm drizzle-kit generate
 ```
 
@@ -69,10 +79,10 @@ src/
 drizzle/
 ```
 
-## 后续建议优先级
+## 当前 MVP 边界
 
-1. 接入真实认证（Better Auth / NextAuth）
-2. 替换 `/api/chat` 的示例流为真实 AI Provider 调用
-3. 完成 PDF 上传、解析、切片和向量写入链路
-4. 把 Agent / Workflow / Dashboard 的占位逻辑替换为真实服务层
-5. 建立真实 migration 流程、测试与部署配置
+1. 认证采用 NextAuth Credentials
+2. 聊天主路径聚焦 DeepSeek / Qwen
+3. 知识库首期仅接受 PDF / Markdown / DOCX / TXT
+4. Dashboard 首期仅接受 CSV / Excel
+5. 输入校验统一使用 Zod

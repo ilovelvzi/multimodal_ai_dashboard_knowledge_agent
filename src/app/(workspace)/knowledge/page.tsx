@@ -7,7 +7,7 @@ export default function KnowledgePage() {
       <PageHeader
         eyebrow="Knowledge"
         title="知识库系统"
-        description="围绕 PDF / 文档型资料，先落地文件上传、文档处理、切片、向量化、检索与引用式回答的完整闭环。"
+        description="围绕 PDF / Markdown / DOCX / TXT，先落地文件上传、文档处理、切片、向量化、Hybrid Search 与引用式回答闭环。"
       />
       <KnowledgeOverview />
     </>

@@ -1,13 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { agentCatalog, knowledgeBaseCatalog, modelCatalog } from "@/lib/catalog";
 
 type ChatMessage = {
   id: string;
   role: "user" | "assistant";
   content: string;
-  citations?: Array<{ title: string; source: string }>;
+  citations?: Array<{ title: string; source: string; excerpt?: string; score?: number }>;
 };
 
 function createId() {
@@ -15,22 +15,50 @@ function createId() {
 }
 
 export function ChatWorkspace() {
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: createId(),
-      role: "assistant",
-      content:
-        "你好，我已经连上当前 MVP 工作区骨架。你可以试着问我如何推进聊天、知识库或 Agent 模块。",
-    },
-  ]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("请概述当前 MVP 里聊天与知识库的落地顺序。");
   const [selectedModel, setSelectedModel] = useState(modelCatalog[0]?.id ?? "");
-  const [selectedKnowledgeBase, setSelectedKnowledgeBase] = useState(
-    knowledgeBaseCatalog[0]?.id ?? "",
-  );
+  const [selectedKnowledgeBase, setSelectedKnowledgeBase] = useState(knowledgeBaseCatalog[0]?.id ?? "");
   const [selectedAgent, setSelectedAgent] = useState(agentCatalog[0]?.id ?? "");
   const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
+  const [chatId, setChatId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadHistory() {
+      const response = await fetch("/api/chat?limit=20", { cache: "no-store" });
+      if (!response.ok) {
+        return;
+      }
+
+      const payload = (await response.json()) as { chatId: string | null; messages: ChatMessage[] };
+      if (cancelled) {
+        return;
+      }
+
+      setChatId(payload.chatId);
+      if (payload.messages.length > 0) {
+        setMessages(payload.messages);
+        return;
+      }
+
+      setMessages([
+        {
+          id: createId(),
+          role: "assistant",
+          content: "你好，我已经连上当前 MVP 工作区。你可以直接针对知识库、数据集或 Agent 提问。",
+        },
+      ]);
+    }
+
+    void loadHistory();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const helperText = useMemo(() => {
     const model = modelCatalog.find((item) => item.id === selectedModel);
@@ -54,11 +82,7 @@ export function ChatWorkspace() {
     };
 
     const assistantId = createId();
-    setMessages((current) => [
-      ...current,
-      userMessage,
-      { id: assistantId, role: "assistant", content: "" },
-    ]);
+    setMessages((current) => [...current, userMessage, { id: assistantId, role: "assistant", content: "" }]);
     setInput("");
     setIsLoading(true);
 
@@ -69,6 +93,7 @@ export function ChatWorkspace() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
+          chatId,
           message: userMessage.content,
           modelId: selectedModel,
           knowledgeBaseId: selectedKnowledgeBase,
@@ -102,24 +127,25 @@ export function ChatWorkspace() {
 
           const payload = JSON.parse(line) as
             | { type: "delta"; delta: string }
-            | { type: "done"; citations: Array<{ title: string; source: string }> };
+            | {
+                type: "done";
+                chatId: string;
+                citations: Array<{ title: string; source: string; excerpt?: string; score?: number }>;
+              };
 
           if (payload.type === "delta") {
             setMessages((current) =>
               current.map((message) =>
-                message.id === assistantId
-                  ? { ...message, content: `${message.content}${payload.delta}` }
-                  : message,
+                message.id === assistantId ? { ...message, content: `${message.content}${payload.delta}` } : message,
               ),
             );
             continue;
           }
 
+          setChatId(payload.chatId);
           setMessages((current) =>
             current.map((message) =>
-              message.id === assistantId
-                ? { ...message, citations: payload.citations }
-                : message,
+              message.id === assistantId ? { ...message, citations: payload.citations } : message,
             ),
           );
         }
@@ -130,7 +156,7 @@ export function ChatWorkspace() {
           message.id === assistantId
             ? {
                 ...message,
-                content: "请求失败，请确认服务端配置与环境变量后重试。",
+                content: "请求失败，请确认登录状态、模型配置与知识库数据后重试。",
               }
             : message,
         ),
@@ -194,7 +220,7 @@ export function ChatWorkspace() {
         </label>
 
         <label className="block space-y-2 text-sm text-zinc-300">
-          <span>文件附件（预留）</span>
+          <span>附件占位</span>
           <input
             type="file"
             multiple
@@ -218,10 +244,7 @@ export function ChatWorkspace() {
       <section className="flex min-h-[720px] flex-col rounded-[28px] border border-white/10 bg-white/5 p-6">
         <div className="space-y-4 overflow-y-auto pr-2">
           {messages.map((message) => (
-            <article
-              key={message.id}
-              className={message.role === "user" ? "ml-auto max-w-3xl" : "max-w-3xl"}
-            >
+            <article key={message.id} className={message.role === "user" ? "ml-auto max-w-3xl" : "max-w-3xl"}>
               <div
                 className={
                   message.role === "user"
@@ -232,14 +255,15 @@ export function ChatWorkspace() {
                 <p className="whitespace-pre-wrap text-sm leading-7">{message.content || "正在生成..."}</p>
               </div>
               {message.citations?.length ? (
-                <div className="mt-3 flex flex-wrap gap-2">
+                <div className="mt-3 space-y-2">
                   {message.citations.map((citation) => (
-                    <span
+                    <div
                       key={`${message.id}-${citation.source}`}
-                      className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-zinc-300"
+                      className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-zinc-300"
                     >
-                      {citation.title} · {citation.source}
-                    </span>
+                      <p>{citation.title} · {citation.source}</p>
+                      {citation.excerpt ? <p className="mt-1 text-zinc-400">{citation.excerpt}</p> : null}
+                    </div>
                   ))}
                 </div>
               ) : null}
@@ -253,12 +277,10 @@ export function ChatWorkspace() {
             onChange={(event) => setInput(event.target.value)}
             rows={4}
             className="w-full rounded-[24px] border border-white/10 bg-black/20 px-5 py-4 text-sm leading-7 text-white outline-none placeholder:text-zinc-500"
-            placeholder="输入你的问题，演示流式 Route Handler 会返回带引用的示例结果。"
+            placeholder="输入你的问题，系统会基于选定知识库执行 Hybrid Search 并流式返回答案。"
           />
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="text-sm text-zinc-400">
-              MVP 目标：流式问答、知识库上下文、模型切换、Tool Calling 预留。
-            </p>
+            <p className="text-sm text-zinc-400">MVP 目标：DeepSeek / Qwen、知识库上下文、引用回答、历史消息持久化。</p>
             <button
               type="submit"
               disabled={isLoading}

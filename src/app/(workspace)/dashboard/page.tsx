@@ -8,7 +8,7 @@ export default function DashboardPage() {
       <PageHeader
         eyebrow="Workspace"
         title="MVP 工作台"
-        description="这里聚合当前 MVP 已搭建的核心模块、技术决策与交付进度，作为后续迭代的统一入口。"
+        description="这里聚合当前 MVP 已搭建的核心模块、技术决策、知识库与 CSV / Excel 数据入口进度。"
       />
 
       <section className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">

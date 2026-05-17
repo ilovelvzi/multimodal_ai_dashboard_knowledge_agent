@@ -14,8 +14,8 @@ export const appManifest = {
   navigation: workspaceNavigation,
   foundationTracks,
   stats: [
-    { label: "候选模型", value: modelCatalog.length, helper: "统一模型目录与路由占位" },
-    { label: "知识库样例", value: knowledgeBaseCatalog.length, helper: "围绕 PDF / RAG MVP" },
+    { label: "模型主路径", value: modelCatalog.length, helper: "DeepSeek / Qwen" },
+    { label: "知识库", value: knowledgeBaseCatalog.length, helper: "PDF / Markdown / DOCX / TXT" },
     { label: "Agent 模板", value: agentCatalog.length, helper: "Prompt + Tool + Memory" },
     { label: "工作流模板", value: workflowTemplates.length, helper: "极简节点编排" },
     { label: "看板数据集", value: dashboardDatasets.length, helper: "CSV / Excel 首批范围" },

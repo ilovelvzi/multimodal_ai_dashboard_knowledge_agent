@@ -16,8 +16,11 @@ import { vector } from "@/server/db/custom-types";
 export const userRoleEnum = pgEnum("user_role", ["admin", "member"]);
 export const documentStatusEnum = pgEnum("document_status", [
   "uploaded",
-  "processing",
-  "indexed",
+  "parsing",
+  "chunking",
+  "embedding",
+  "indexing",
+  "completed",
   "failed",
 ]);
 export const runStatusEnum = pgEnum("run_status", ["queued", "running", "succeeded", "failed"]);
@@ -65,6 +68,10 @@ export const chats = pgTable(
     modelId: varchar("model_id", { length: 128 }).notNull(),
     knowledgeBaseId: uuid("knowledge_base_id"),
     agentId: uuid("agent_id"),
+    contextSnapshot: jsonb("context_snapshot")
+      .$type<Record<string, unknown>>()
+      .notNull()
+      .default(sql`'{}'::jsonb`),
     ...timestamps,
   },
   (table) => [index("chats_user_id_idx").on(table.userId)],
@@ -91,6 +98,7 @@ export const knowledgeBases = pgTable("knowledge_bases", {
   name: varchar("name", { length: 255 }).notNull(),
   description: text("description").notNull(),
   embeddingModel: varchar("embedding_model", { length: 128 }).notNull(),
+  rerankModel: varchar("rerank_model", { length: 128 }).notNull().default("gte-rerank"),
   retrievalConfig: jsonb("retrieval_config")
     .$type<Record<string, unknown>>()
     .notNull()
@@ -109,6 +117,8 @@ export const documents = pgTable(
     fileType: varchar("file_type", { length: 64 }).notNull(),
     storageKey: text("storage_key").notNull(),
     status: documentStatusEnum("status").notNull().default("uploaded"),
+    chunkCount: integer("chunk_count").notNull().default(0),
+    errorMessage: text("error_message"),
     metadata: jsonb("metadata").$type<Record<string, unknown>>().notNull().default(sql`'{}'::jsonb`),
     ...timestamps,
   },
@@ -125,6 +135,10 @@ export const documentChunks = pgTable(
     chunkIndex: integer("chunk_index").notNull(),
     content: text("content").notNull(),
     tokens: integer("tokens").notNull().default(0),
+    pageNumber: integer("page_number"),
+    sourcePath: text("source_path"),
+    startOffset: integer("start_offset"),
+    endOffset: integer("end_offset"),
     metadata: jsonb("metadata").$type<Record<string, unknown>>().notNull().default(sql`'{}'::jsonb`),
     ...timestamps,
   },
@@ -201,10 +215,12 @@ export const dashboardDatasets = pgTable("dashboard_datasets", {
   id: uuid("id").defaultRandom().primaryKey(),
   name: varchar("name", { length: 255 }).notNull(),
   sourceType: varchar("source_type", { length: 64 }).notNull(),
+  fileName: varchar("file_name", { length: 255 }),
   schemaSnapshot: jsonb("schema_snapshot")
     .$type<Record<string, unknown>>()
     .notNull()
     .default(sql`'{}'::jsonb`),
+  previewRows: jsonb("preview_rows").$type<Record<string, unknown>[]>().notNull().default(sql`'[]'::jsonb`),
   metadata: jsonb("metadata").$type<Record<string, unknown>>().notNull().default(sql`'{}'::jsonb`),
   ...timestamps,
 });

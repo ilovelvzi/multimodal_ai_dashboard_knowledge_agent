@@ -7,7 +7,7 @@ export default function ChatPage() {
       <PageHeader
         eyebrow="AI Chat Center"
         title="聊天中心"
-        description="已实现 MVP 级对话工作区：模型切换、知识库上下文、Agent 选择、文件附件预留和流式 Route Handler。"
+        description="已实现 MVP 级对话工作区：DeepSeek / Qwen 切换、知识库上下文、引用回答、历史消息与流式 Route Handler。"
       />
       <ChatWorkspace />
     </>
