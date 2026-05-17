@@ -1,7 +1,9 @@
+import type { Route } from "next";
+
 export type Readiness = "ready" | "planned" | "scaffolded";
 
 export type NavigationItem = {
-  href: string;
+  href: Route;
   label: string;
   description: string;
 };
