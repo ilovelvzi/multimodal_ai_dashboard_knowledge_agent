@@ -1,11 +1,12 @@
 import Link from "next/link";
+import type { Session } from "next-auth";
 import { workspaceNavigation } from "@/lib/catalog";
 import { cn } from "@/lib/utils";
-import type { DemoSession } from "@/server/auth/session";
+import { LogoutButton } from "@/components/logout-button";
 
 type AppShellProps = {
   children: React.ReactNode;
-  session: DemoSession;
+  session: Session;
 };
 
 export function AppShell({ children, session }: AppShellProps) {
@@ -16,20 +17,19 @@ export function AppShell({ children, session }: AppShellProps) {
           <div className="space-y-4">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.32em] text-sky-300">AI OS MVP</p>
-              <h1 className="mt-3 text-xl font-semibold text-white">
-                多模态 AI 看板与知识库 Agent 平台
-              </h1>
+              <h1 className="mt-3 text-xl font-semibold text-white">多模态 AI 看板与知识库 Agent 平台</h1>
               <p className="mt-3 text-sm leading-6 text-zinc-400">
                 聚焦聊天、知识库、Agent、Workflow 与 Dashboard 的单体式 MVP。
               </p>
             </div>
 
             <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
-              <p className="text-sm font-medium text-white">{session.user.name}</p>
-              <p className="mt-1 text-sm text-zinc-400">{session.user.email}</p>
-              <p className="mt-3 text-xs uppercase tracking-[0.18em] text-zinc-500">
-                {session.user.role}
-              </p>
+              <p className="text-sm font-medium text-white">{session.user?.name}</p>
+              <p className="mt-1 text-sm text-zinc-400">{session.user?.email}</p>
+              <div className="mt-3 flex items-center justify-between gap-2">
+                <p className="text-xs uppercase tracking-[0.18em] text-zinc-500">{session.user?.role}</p>
+                <LogoutButton />
+              </div>
             </div>
           </div>
 

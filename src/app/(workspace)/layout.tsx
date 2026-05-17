@@ -1,10 +1,11 @@
 import { AppShell } from "@/components/app-shell";
-import { getDemoSession } from "@/server/auth/session";
+import { requireSession } from "@/server/auth/session";
 
-export default function WorkspaceLayout({
+export default async function WorkspaceLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return <AppShell session={getDemoSession()}>{children}</AppShell>;
+  const session = await requireSession();
+  return <AppShell session={session}>{children}</AppShell>;
 }
