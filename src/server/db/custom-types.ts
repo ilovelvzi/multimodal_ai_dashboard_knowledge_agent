@@ -6,7 +6,7 @@ export const vector = customType<{
   config: { dimensions: number };
 }>({
   dataType(config) {
-    return `vector(${config.dimensions})`;
+    return `vector(${config?.dimensions ?? 1536})`;
   },
   toDriver(value) {
     return `[${value.join(",")}]`;
